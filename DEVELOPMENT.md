@@ -218,7 +218,7 @@ Open `http://localhost:3000` in your browser.
 - Ensure all backend unit tests pass (`python -m unittest discover -s tests`).
 - Ensure the frontend builds cleanly without TypeScript or lint errors (`npm run build`).
 - For user-facing interface changes, include screenshots verifying both RTL (Kurdish) and LTR (English) layouts.
-- Label any AI-generated or AI-assisted pull requests with the `AI-Made` label.
+- Assign relevant domain labels (e.g., `frontend`, `backend`, `infra`, `documentation`).
 
 ---
 

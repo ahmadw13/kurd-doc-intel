@@ -22,4 +22,4 @@
 - [ ] Kurdish Unicode codepoints respected (ڵ, ڕ, ێ, ۆ)
 - [ ] Bidirectional layout parity verified (RTL Sorani / LTR English)
 - [ ] Documentation updated (README.md / DEVELOPMENT.md) if applicable
-- [ ] Added AI-Made label if created or assisted by AI
+- [ ] Relevant domain labels assigned (e.g., frontend, backend, infra, documentation)
