@@ -16,7 +16,7 @@ KurdDocIntel addresses this by pairing Vision-Language Models (VLMs) with specia
 
 ## Architecture
 
-`mermaid
+```mermaid
 flowchart TD
     subgraph Input [Document Ingestion]
         Doc["Document (PDF / Image / Manuscript)"]
@@ -47,7 +47,7 @@ flowchart TD
         Metadata --> QA
         QA --> UI
     end
-`
+```
 
 ---
 
