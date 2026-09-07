@@ -213,6 +213,13 @@ Open `http://localhost:3000` in your browser.
 - When writing backend endpoints that call external AI providers, wrap calls with `try...except` catching rate limit errors (HTTP 429, `RESOURCE_EXHAUSTED`).
 - Return structured error details (`{ "code": "AI_RATE_LIMIT", "message": "..." }`) so the frontend can display contextual diagnostic notices.
 
+### 5.5 Pull Request Standards
+- Every pull request must adhere to the standard template defined in [.github/pull_request_template.md](.github/pull_request_template.md).
+- Ensure all backend unit tests pass (`python -m unittest discover -s tests`).
+- Ensure the frontend builds cleanly without TypeScript or lint errors (`npm run build`).
+- For user-facing interface changes, include screenshots verifying both RTL (Kurdish) and LTR (English) layouts.
+- Label any AI-generated or AI-assisted pull requests with the `AI-Made` label.
+
 ---
 
 ## 6. Production Build & Verification
