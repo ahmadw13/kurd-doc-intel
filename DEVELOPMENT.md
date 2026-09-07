@@ -10,10 +10,6 @@ Before running the application locally, ensure you have the following installed:
 
 - **Python:** 3.11 or higher (3.13 tested and supported).
 - **Node.js:** 18.0 or higher (with npm or pnpm).
-- **Poppler:** Required by `pdf2image` for rendering PDF pages to high-resolution images.
-  - **Windows:** Download Poppler for Windows (e.g., from conda-forge or GitHub releases) and ensure `bin/` is added to your system `PATH`.
-  - **macOS:** `brew install poppler`
-  - **Ubuntu / Debian:** `sudo apt-get install -y poppler-utils`
 - **AI API Keys:**
   - Google Gemini API key (primary multimodal provider and embeddings).
   - OpenAI API key (optional fallback for OCR and Q&A).

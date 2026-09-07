@@ -70,7 +70,7 @@ Kurdish printed and digital documents present formidable hurdles for traditional
 | **Multimodal Fallback** | OpenAI API | `gpt-4o` |
 | **Embedding Model** | Gemini Multilingual | `gemini-embedding-2` (3072 dimensions) |
 | **Vector Database** | ChromaDB | Persistent Client with Cosine Similarity |
-| **Document Rendering** | pdf2image, Poppler | 300 DPI high-resolution rendering |
+| **Document Rendering** | pypdfium2 | Self-contained high-resolution PDF rendering (bundled PDFium) |
 | **Image Processing** | Pillow (PIL) | RGB normalization & compression |
 | **Frontend Framework** | Next.js (App Router) | Next.js 16.3+ with React 19 |
 | **Styling & Layout** | Tailwind CSS | Bidirectional (`rtl` / `ltr`) layout system |
@@ -101,7 +101,7 @@ flowchart TD
     end
 
     subgraph Pipeline [Document Intelligence Pipeline]
-        Renderer["Poppler 300 DPI Renderer"]
+        Renderer["High-Resolution Document Renderer (pypdfium2)"]
         Normalizer["Orthography & Layout Normalizer"]
         VLM["Multimodal VLM Service (Gemini / OpenAI)"]
         Chunker["Page-Aware Text Chunker"]
@@ -151,7 +151,7 @@ kurd-doc-intel/
 │   │   │   └── schemas.py            # Request/Response models (ParseResponse, QueryResponse)
 │   │   ├── services/
 │   │   │   ├── __init__.py
-│   │   │   ├── document_processor.py # PDF to 300 DPI image rendering via pdf2image
+│   │   │   ├── document_processor.py # PDF to high-res image rendering via pypdfium2
 │   │   │   ├── vector_service.py     # ChromaDB indexing, querying, chunking
 │   │   │   └── vlm_service.py        # Gemini & OpenAI multimodal OCR & Q&A logic
 │   │   ├── __init__.py
@@ -159,11 +159,13 @@ kurd-doc-intel/
 │   ├── data/
 │   │   ├── documents/                # Saved parsed document JSON records
 │   │   └── uploads/                  # Temporary uploaded files
+│   ├── tests/
+│   │   ├── __init__.py
+│   │   └── test_api.py               # Automated API endpoint unit tests
 │   ├── chroma_db/                    # Persistent ChromaDB vector storage directory
 │   ├── .env.example                  # Template backend environment variables
 │   ├── Dockerfile                    # Backend container build specification
-│   ├── requirements.txt              # Python production dependencies
-│   └── test_monkey.py                # Retrieval and citation verification script
+│   └── requirements.txt              # Python production dependencies
 ├── frontend/
 │   ├── app/
 │   │   ├── globals.css               # Tailwind theme, scrollbars, RTL base styles
@@ -210,10 +212,6 @@ Before setting up KurdDocIntel, verify that your development machine has the fol
 
 - **Python:** Version 3.11 or higher (Python 3.13 tested).
 - **Node.js:** Version 18.0 or higher (with npm or pnpm).
-- **Poppler:** Essential for PDF rendering:
-  - **Windows:** Install Poppler (e.g., via conda-forge or GitHub releases) and add `bin/` to system `PATH`.
-  - **macOS:** `brew install poppler`
-  - **Linux (Ubuntu/Debian):** `sudo apt-get install -y poppler-utils`
 - **Google Gemini API Key:** Required for multimodal document parsing and multilingual vector embeddings.
 - **OpenAI API Key (Optional):** Used as automated fallback if Gemini reaches rate limits.
 
@@ -353,16 +351,15 @@ curl -X POST "http://127.0.0.1:8080/api/v1/parse?max_pages=3" \
 | --- | --- | --- |
 | `uvicorn app.main:app --reload --port 8080` | `backend/` | Start backend in development mode with live code reload |
 | `uvicorn app.main:app --host 0.0.0.0 --port 8080 --workers 4` | `backend/` | Start backend in multi-worker production mode |
-| `python test_monkey.py` | `backend/` | Run integration tests against sample indexed documents |
+| `python -m unittest discover -s tests` | `backend/` | Run automated API endpoint unit tests |
 
 ### Frontend Commands
 
 | Command | Working Directory | Description |
 | --- | --- | --- |
 | `npm run dev` | `frontend/` | Start Next.js local development server on port 3000 |
-| `npm run build` | `frontend/` | Compile optimized Next.js production build |
+| `npm run build` | `frontend/` | Compile optimized Next.js production build with TypeScript check |
 | `npm run start` | `frontend/` | Run compiled Next.js production server |
-| `npm run lint` | `frontend/` | Run ESLint static code verification |
 
 ---
 
@@ -430,17 +427,13 @@ docker compose down
 
 ## Troubleshooting & FAQ
 
-### 1. `pdf2image.exceptions.PDFInfoNotInstalledError`
-- **Cause:** Poppler binary is not found on your system execution PATH.
-- **Remedy:** Install Poppler using your package manager (`brew install poppler` on macOS, `apt-get install poppler-utils` on Linux, or download Poppler for Windows) and confirm `pdftoppm -v` runs from your shell.
-
-### 2. HTTP 429 / Resource Exhausted Errors
+### 1. HTTP 429 / Resource Exhausted Errors
 - **Cause:** Google Gemini free-tier or per-minute rate limits reached.
 - **Remedy:** The backend automatically attempts fallback to OpenAI if `OPENAI_API_KEY` is provided in `.env`. Alternatively, reduce the `max_pages` count or pause for 60 seconds before retrying.
 
-### 3. Missing Ligatures or Kurdish Digit Anomalies
+### 2. Missing Ligatures or Kurdish Digit Anomalies
 - **Cause:** Legacy non-standard fonts used in old publications.
-- **Remedy:** KurdDocIntel uses high-resolution visual parsing rather than standard text layer extraction, which bypasses faulty legacy font encodings. Verify that the image DPI is set to at least 300 DPI.
+- **Remedy:** KurdDocIntel uses high-resolution visual parsing rather than standard text layer extraction, which bypasses faulty legacy font encodings. Verify that the image resolution is sufficiently sharp for fine diacritics.
 
 ---
 
