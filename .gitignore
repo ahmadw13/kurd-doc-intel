@@ -46,6 +46,9 @@ frontend/build/
 backend/chroma_db/
 backend/data/uploads/*
 !backend/data/uploads/.gitkeep
+backend/data/documents/*
+!backend/data/documents/.gitkeep
+backend/data/samples/
 uploads/
 **/uploads/*
 !**/uploads/.gitkeep
