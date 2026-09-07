@@ -8,7 +8,7 @@
 Kurdish digital and printed documents present unique challenges for traditional OCR and retrieval pipelines:
 - Complex ligatures, non-standard diacritics, and distinctive Kurdish characters (ڵ, ڕ, ڤ, ۆ, ێ, ژ, پ, چ, گ).
 - Documents rendered in non-Unicode legacy ASCII fonts that break standard text extraction.
-- A lack of multilingual semantic search and RAG systems tailored to Kurdish text structures and vocabulary.
+- A lack of multilingual semantic search and intelligent retrieval systems tailored to Kurdish text structures and vocabulary.
 
 KurdDocIntel addresses this by pairing state-of-the-art Vision-Language Models (VLMs) with specialized document prompting and a multilingual vector retrieval engine.
 
@@ -54,7 +54,7 @@ flowchart TD
 ## Key Capabilities
 - **High-Fidelity Kurdish OCR:** Converts printed books, scanned pages, and articles into clean, standard Kurdish Unicode markdown.
 - **Structured Metadata & Entity Extraction:** Automatically detects document title, dialect, publication details, and prominent entities.
-- **Multilingual Semantic Q&A (RAG):** Ask questions in Kurdish (Sorani/Kurmanji) or English and get grounded answers with source citations.
+- **Multilingual Semantic Q&A:** Ask questions in Kurdish (Sorani/Kurmanji) or English and get grounded answers with source citations.
 - **Interactive Conversational UI:** Full dual-pane view with live OCR markdown and conversational document chat.
 
 ---
