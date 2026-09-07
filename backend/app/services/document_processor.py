@@ -1,17 +1,32 @@
 import io
-from pypdf import PdfReader
+import pypdfium2 as pdfium
 from PIL import Image
 from typing import List, Tuple
 
-def extract_pdf_page_images(pdf_bytes: bytes) -> List[Tuple[bytes, str]]:
-    images = []
-    reader = PdfReader(io.BytesIO(pdf_bytes))
-    for page in reader.pages:
-        for img in page.images:
-            images.append((img.data, f"image/{img.name.split('.')[-1].lower()}"))
-    return images
+def extract_pdf_page_images(pdf_path: str, scale: float = 2.0) -> List[Tuple[bytes, str]]:
+    """Renders each page of a PDF into high-res JPEG image bytes suitable for VLM parsing."""
+    pdf = pdfium.PdfDocument(pdf_path)
+    page_images = []
+    
+    for page_index in range(len(pdf)):
+        page = pdf[page_index]
+        # Render page at 2x resolution for crisp text recognition
+        pil_image = page.render(scale=scale).to_pil()
+        
+        if pil_image.mode not in ("RGB", "L"):
+            pil_image = pil_image.convert("RGB")
+            
+        buf = io.BytesIO()
+        pil_image.save(buf, format="JPEG", quality=90)
+        page_images.append((buf.getvalue(), "image/jpeg"))
+        
+    return page_images
 
-def prepare_image(image_bytes: bytes, max_dim: int = 1800) -> Tuple[bytes, str]:
+def prepare_image(image_path: str, max_dim: int = 2000) -> List[Tuple[bytes, str]]:
+    """Cleans, converts and standardizes standalone image files. Returns a list for uniform iteration."""
+    with open(image_path, "rb") as f:
+        image_bytes = f.read()
+
     img = Image.open(io.BytesIO(image_bytes))
     
     if img.mode not in ("RGB", "L"):
@@ -26,4 +41,4 @@ def prepare_image(image_bytes: bytes, max_dim: int = 1800) -> Tuple[bytes, str]:
         
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=92)
-    return buf.getvalue(), "image/jpeg"
+    return [(buf.getvalue(), "image/jpeg")]
