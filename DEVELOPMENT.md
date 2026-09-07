@@ -55,7 +55,19 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:8080
 
 ## 3. Local Development Setup
 
-### Backend (FastAPI)
+### 3.1 Single-Command Development Runner
+
+To launch both the FastAPI backend (port 8080) and the Next.js frontend (port 3000) simultaneously in a single terminal with interleaved log streaming:
+
+```bash
+python run_dev.py
+```
+
+Pressing `Ctrl+C` cleanly shuts down both services and releases their ports.
+
+### 3.2 Individual Service Setup
+
+#### Backend (FastAPI)
 
 ```bash
 cd backend
@@ -78,7 +90,7 @@ uvicorn app.main:app --host 127.0.0.1 --port 8080 --reload
 
 The interactive OpenAPI documentation is available at `http://127.0.0.1:8080/docs`.
 
-### Frontend (Next.js)
+#### Frontend (Next.js)
 
 ```bash
 cd frontend
