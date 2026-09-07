@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+body {
+  background-color: #020617;
+  color: #f8fafc;
+}
+
+.font-kurdish {
+  direction: rtl;
+  text-align: right;
+  line-height: 1.8;
+}
