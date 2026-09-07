@@ -134,13 +134,25 @@ async def parse_document(
     except asyncio.TimeoutError:
         if os.path.exists(saved_path):
             os.remove(saved_path)
-        raise HTTPException(status_code=540, detail="Document processing timed out.")
+        raise HTTPException(
+            status_code=504,
+            detail={"code": "TIMEOUT", "message": "Document processing timed out."}
+        )
     except HTTPException:
         raise
     except Exception as e:
         if os.path.exists(saved_path):
             os.remove(saved_path)
-        raise HTTPException(status_code=500, detail=f"Failed to process document: {str(e)}")
+        err_text = str(e)
+        if any(x in err_text for x in ("429", "RESOURCE_EXHAUSTED", "quota", "RateLimit", "exhausted")):
+            raise HTTPException(
+                status_code=429,
+                detail={"code": "AI_RATE_LIMIT", "message": "AI quota or rate limit exceeded. Please wait 1-2 minutes or reduce page count."}
+            )
+        raise HTTPException(
+            status_code=500,
+            detail={"code": "PROCESSING_FAILED", "message": f"Failed to process document: {err_text}"}
+        )
 
 @router.post("/query", response_model=QueryResponse)
 async def query_documents(request: QueryRequest):
@@ -153,7 +165,10 @@ async def query_documents(request: QueryRequest):
         )
 
         if citations:
-            context = "\n\n".join([f"[{c.document_id}]: {c.text_snippet}" for c in citations])
+            context = "\n\n".join([
+                f"[Source Citation #{i+1} | Document: {c.document_id} | Page {c.page_number or 1} | Chunk #{c.chunk_index + 1}]:\n{c.text_snippet}"
+                for i, c in enumerate(citations)
+            ])
             answer = await asyncio.to_thread(
                 vlm_service.answer_query,
                 request.question,
@@ -166,8 +181,19 @@ async def query_documents(request: QueryRequest):
             answer=answer,
             citations=citations
         )
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
+        err_text = str(e)
+        if any(x in err_text for x in ("429", "RESOURCE_EXHAUSTED", "quota", "RateLimit", "exhausted")):
+            raise HTTPException(
+                status_code=429,
+                detail={"code": "AI_RATE_LIMIT", "message": "AI rate limit reached during search. Please wait a moment."}
+            )
+        raise HTTPException(
+            status_code=500,
+            detail={"code": "QUERY_FAILED", "message": f"Query failed: {err_text}"}
+        )
 
 @router.get("/documents")
 async def list_documents():
