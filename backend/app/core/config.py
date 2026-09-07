@@ -20,9 +20,10 @@ class Settings(BaseSettings):
     CHROMA_PERSIST_DIR: str = "chroma_db"
     
     class Config:
-        env_file = "../.env"
+        env_file = (".env", "../.env")
         env_file_encoding = "utf-8"
         case_sensitive = True
+        extra = "ignore"
 
 settings = Settings()
 
