@@ -1,4 +1,4 @@
-﻿import time
+import time
 import os
 import shutil
 import asyncio
@@ -60,6 +60,12 @@ async def parse_document(
         all_markdown = []
         aggregated_entities = set()
         primary_metadata = None
+        extracted_title = None
+        extracted_date = None
+        extracted_location = None
+        extracted_dialect = None
+        extracted_doc_type = None
+        extracted_summary = None
 
         for idx, (img_bytes, mime_type) in enumerate(page_images):
             if await request.is_disconnected():
@@ -77,15 +83,36 @@ async def parse_document(
             all_markdown.append(f"<!-- Page {idx + 1} -->\n" + markdown)
             if meta.entities:
                 aggregated_entities.update(meta.entities)
-            if idx == 0:
-                primary_metadata = meta
+
+            # Accumulate the first non-null metadata values found across any page
+            if not extracted_title and meta.title and meta.title.lower() not in ("null", "none", "untitled"):
+                extracted_title = meta.title
+            if not extracted_date and meta.date_mentioned:
+                extracted_date = meta.date_mentioned
+            if not extracted_location and meta.location:
+                extracted_location = meta.location
+            if not extracted_dialect and meta.dialect:
+                extracted_dialect = meta.dialect
+            if not extracted_doc_type and meta.document_type:
+                extracted_doc_type = meta.document_type
+            if not extracted_summary and meta.summary:
+                extracted_summary = meta.summary
 
         full_markdown = "\n\n---\n\n".join(all_markdown)
         
-        if primary_metadata:
-            primary_metadata.entities = list(aggregated_entities)
-        else:
-            primary_metadata = DocumentMetadata(summary="Parsed document")
+        # Smart fallback for title: strip extension and cleanup underscores
+        clean_file_title = os.path.splitext(file.filename)[0].replace("_", " ").strip()
+        final_title = extracted_title or clean_file_title
+
+        primary_metadata = DocumentMetadata(
+            title=final_title,
+            document_type=extracted_doc_type or "general",
+            date_mentioned=extracted_date,
+            dialect=extracted_dialect or "Sorani",
+            location=extracted_location,
+            entities=list(aggregated_entities),
+            summary=extracted_summary or "Parsed Kurdish document."
+        )
 
         await asyncio.to_thread(
             vector_service.add_document,
@@ -126,8 +153,12 @@ async def query_documents(request: QueryRequest):
         )
 
         if citations:
-            context = "\n".join([f"[{c.document_id}]: {c.text_snippet}" for c in citations])
-            answer = f"بێگومان، بەپێی بەڵگەنامە ئاماژەپێکراوەکان:\n\n{context}"
+            context = "\n\n".join([f"[{c.document_id}]: {c.text_snippet}" for c in citations])
+            answer = await asyncio.to_thread(
+                vlm_service.answer_query,
+                request.question,
+                context
+            )
         else:
             answer = "داوا لەبوردن دەکەم، هیچ زانیارییەکی پەیوەندیدار لە بەڵگەنامەکاندا نەدۆزرایەوە."
 
