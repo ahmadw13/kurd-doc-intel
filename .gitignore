@@ -44,7 +44,11 @@ frontend/build/
 
 # Vector store & local storage
 backend/chroma_db/
-backend/uploads/
+backend/data/uploads/*
+!backend/data/uploads/.gitkeep
+uploads/
+**/uploads/*
+!**/uploads/.gitkeep
 *.sqlite3
 
 # IDEs & System
