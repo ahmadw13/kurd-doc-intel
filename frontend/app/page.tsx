@@ -71,7 +71,9 @@ const translations = {
     supportedFormats: "پشتگیری لە فۆرماتی PDF, JPG, PNG دەکات",
     maxPagesLabel: "ژمارەی پەڕە بۆ شیکردنەوە:",
     pagesUnit: "پەڕە",
-    maxPagesHint: "دەتوانیت لە ١ تا ١٠ پەڕە هەڵبژێریت بۆ تێستی خێرا و پاراستنی پشکی کوۆتا.",
+    allPages: "هەموو پەڕەکان",
+    processAllCheckbox: "شیکردنەوەی تەواوی پەڕەکان (بێ سنوور)",
+    maxPagesHint: "دەتوانیت لە ١ تا ٢٠ پەڕە دیاری بکەیت یان هەموو پەڕەکان هەڵبژێریت.",
     startBtn: "دەستپێکردنی شیکردنەوەی بەڵگەنامە",
     processingBtn: "شیکردنەوەی پەڕەکان لە ڕێگەی ژیریی دەستکردەوە...",
     metadataTitle: "زانیارییە دەرهێنراوەکان (Metadata)",
@@ -113,7 +115,9 @@ const translations = {
     supportedFormats: "Supports PDF, JPG, PNG, and WebP formats",
     maxPagesLabel: "Pages to process:",
     pagesUnit: "pages",
-    maxPagesHint: "Select 1 to 10 pages for rapid processing and quota conservation.",
+    allPages: "All Pages",
+    processAllCheckbox: "Process entire document (All pages)",
+    maxPagesHint: "Select 1 to 20 pages or check 'All pages' to parse the full document.",
     startBtn: "Start Document Analysis",
     processingBtn: "Analyzing pages with Multimodal VLM...",
     metadataTitle: "Extracted Document Metadata",
@@ -149,6 +153,7 @@ export default function Home() {
 
   const [file, setFile] = useState<File | null>(null);
   const [maxPages, setMaxPages] = useState<number>(3);
+  const [processAllPages, setProcessAllPages] = useState<boolean>(false);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [parseResult, setParseResult] = useState<ParseResponse | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -186,8 +191,10 @@ export default function Home() {
     const formData = new FormData();
     formData.append("file", file);
 
+    const pagesParam = processAllPages ? 0 : maxPages;
+
     try {
-      const res = await fetch(`${backendUrl}/api/v1/parse?max_pages=${maxPages}`, {
+      const res = await fetch(`${backendUrl}/api/v1/parse?max_pages=${pagesParam}`, {
         method: "POST",
         body: formData,
       });
@@ -345,21 +352,41 @@ export default function Home() {
                 />
               </label>
 
-              {/* Max pages control */}
-              <div className="rounded-xl border border-slate-800/80 bg-slate-950/40 p-4">
-                <div className="flex items-center justify-between text-xs font-medium text-slate-300 mb-2">
-                  <span>{t.maxPagesLabel}</span>
-                  <span className="font-bold text-emerald-400">{maxPages} {t.pagesUnit}</span>
+              {/* Max pages & Process All control */}
+              <div className="rounded-xl border border-slate-800/80 bg-slate-950/40 p-4 space-y-3">
+                {/* Checkbox for Process All Pages */}
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={processAllPages}
+                    onChange={(e) => setProcessAllPages(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-950 cursor-pointer"
+                  />
+                  <span className="text-xs font-semibold text-slate-200">
+                    {t.processAllCheckbox}
+                  </span>
+                </label>
+
+                {/* Slider (disabled when all pages is checked) */}
+                <div className={`transition-opacity ${processAllPages ? "opacity-40 pointer-events-none" : "opacity-100"}`}>
+                  <div className="flex items-center justify-between text-xs font-medium text-slate-300 mb-2">
+                    <span>{t.maxPagesLabel}</span>
+                    <span className="font-bold text-emerald-400">
+                      {processAllPages ? t.allPages : `${maxPages} ${t.pagesUnit}`}
+                    </span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="1" 
+                    max="20" 
+                    value={maxPages} 
+                    disabled={processAllPages}
+                    onChange={(e) => setMaxPages(Number(e.target.value))}
+                    className="w-full accent-emerald-500 cursor-pointer"
+                  />
                 </div>
-                <input 
-                  type="range" 
-                  min="1" 
-                  max="10" 
-                  value={maxPages} 
-                  onChange={(e) => setMaxPages(Number(e.target.value))}
-                  className="w-full accent-emerald-500 cursor-pointer"
-                />
-                <p className="mt-2 text-[11px] text-slate-500">
+
+                <p className="text-[11px] text-slate-500">
                   {t.maxPagesHint}
                 </p>
               </div>
