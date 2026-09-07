@@ -76,6 +76,8 @@ const translations = {
     maxPagesHint: "دەتوانیت لە ١ تا ٢٠ پەڕە دیاری بکەیت یان هەموو پەڕەکان هەڵبژێریت.",
     startBtn: "دەستپێکردنی شیکردنەوەی بەڵگەنامە",
     processingBtn: "شیکردنەوەی پەڕەکان لە ڕێگەی ژیریی دەستکردەوە...",
+    uploadProgressTitle: "پڕۆسێسکردنی بەڵگەنامە لە کاردایە",
+    uploadProgressSubtitle: "پەڕەکان بە وردی دەخوێنرێنەوە و دەگۆڕدرێن بۆ دەقی دیجیتاڵی...",
     metadataTitle: "زانیارییە دەرهێنراوەکان (Metadata)",
     successStatus: "شیکردنەوە سەرکەوتوو بوو",
     secondsUnit: "چرکە",
@@ -120,6 +122,8 @@ const translations = {
     maxPagesHint: "Select 1 to 20 pages or check 'All pages' to parse the full document.",
     startBtn: "Start Document Analysis",
     processingBtn: "Analyzing pages with Multimodal VLM...",
+    uploadProgressTitle: "Document Intelligence in Progress",
+    uploadProgressSubtitle: "Transcribing pages and generating semantic embeddings...",
     metadataTitle: "Extracted Document Metadata",
     successStatus: "Document parsed successfully",
     secondsUnit: "sec",
@@ -187,14 +191,13 @@ export default function Home() {
     setParseResult(null);
     setMessages([]);
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8080";
     const formData = new FormData();
     formData.append("file", file);
 
     const pagesParam = processAllPages ? 0 : maxPages;
 
     try {
-      const res = await fetch(`${backendUrl}/api/v1/parse?max_pages=${pagesParam}`, {
+      const res = await fetch(`/api/v1/parse?max_pages=${pagesParam}`, {
         method: "POST",
         body: formData,
       });
@@ -229,10 +232,8 @@ export default function Home() {
     setIsQuerying(true);
     setErrorMsg(null);
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8080";
-
     try {
-      const res = await fetch(`${backendUrl}/api/v1/query`, {
+      const res = await fetch(`/api/v1/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -408,6 +409,26 @@ export default function Home() {
                   </>
                 )}
               </button>
+              {isUploading && (
+                <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-3.5 space-y-2.5 animate-pulse">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-emerald-300 flex items-center gap-1.5">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-400" />
+                      {t.uploadProgressTitle}
+                    </span>
+                    <span className="text-[11px] text-emerald-400/80 font-mono">VLM OCR</span>
+                  </div>
+                  
+                  {/* Animated Progress Bar */}
+                  <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-sky-400 w-full animate-[progress_2s_ease-in-out_infinite]"></div>
+                  </div>
+
+                  <p className="text-[11px] text-slate-400 leading-tight">
+                    {t.uploadProgressSubtitle}
+                  </p>
+                </div>
+              )}
             </div>
 
             {errorMsg && (
