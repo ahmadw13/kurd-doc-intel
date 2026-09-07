@@ -1,0 +1,17 @@
+.git/
+.gitignore
+.agents/
+.agent/
+.gemini/
+.vscode/
+.idea/
+backend/venv/
+backend/chroma_db/
+backend/data/uploads/*
+!backend/data/uploads/.gitkeep
+backend/data/documents/*
+!backend/data/documents/.gitkeep
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+*.log
