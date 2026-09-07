@@ -1,16 +1,16 @@
-# KurdDocIntel — Kurdish Multimodal Document & Archival Intelligence
+# KurdDocIntel — Kurdish Multimodal Document Intelligence & Semantic Search
 
-> High-precision Kurdish OCR, document parsing, and semantic archival search engineered for historical manuscripts, administrative records, and cultural texts across Sorani & Kurmanji dialects.
+> High-precision Kurdish OCR, document parsing, entity extraction, and semantic search engineered for Kurdish books, publications, reports, and digital documents across Sorani & Kurmanji dialects.
 
 ---
 
 ## Context & Problem Statement
-Historical and modern Kurdish texts present unique challenges for traditional OCR and document parsing pipelines:
+Kurdish digital and printed documents present unique challenges for traditional OCR and retrieval pipelines:
 - Complex ligatures, non-standard diacritics, and distinctive Kurdish characters (ڵ, ڕ, ڤ, ۆ, ێ, ژ, پ, چ, گ).
-- Century-old degraded scans from historical Kurdish newspapers, poetry collections, and manuscripts.
-- A lack of localized semantic search and RAG systems tailored to Kurdish heritage and administrative documents.
+- Documents rendered in non-Unicode legacy ASCII fonts that break standard text extraction.
+- A lack of multilingual semantic search and RAG systems tailored to Kurdish text structures and vocabulary.
 
-KurdDocIntel addresses this by pairing Vision-Language Models (VLMs) with specialized document prompting and a multilingual vector retrieval engine.
+KurdDocIntel addresses this by pairing state-of-the-art Vision-Language Models (VLMs) with specialized document prompting and a multilingual vector retrieval engine.
 
 ---
 
@@ -19,8 +19,8 @@ KurdDocIntel addresses this by pairing Vision-Language Models (VLMs) with specia
 ```mermaid
 flowchart TD
     subgraph Input [Document Ingestion]
-        Doc["Document (PDF / Image / Manuscript)"]
-        Pre["Preprocessing & Normalization"]
+        Doc["Document (PDF / Image / Book / Report)"]
+        Pre["Preprocessing & High-Resolution Normalization"]
         Doc --> Pre
     end
 
@@ -52,10 +52,10 @@ flowchart TD
 ---
 
 ## Key Capabilities
-- **High-Fidelity Kurdish Transcription:** Preserves Kurdish typography, poetry meter, and table structures.
-- **Metadata & Entity Extraction:** Automatically detects document date, place of publication, author/signatory, and key themes.
-- **Archival Semantic Q&A:** Ask natural questions in Kurdish (Sorani/Kurmanji) or English and get grounded answers with document citations.
-- **Ready-to-Test Sample Archive:** Preloaded with sample Kurdish historical documents.
+- **High-Fidelity Kurdish OCR:** Converts printed books, scanned pages, and articles into clean, standard Kurdish Unicode markdown.
+- **Structured Metadata & Entity Extraction:** Automatically detects document title, dialect, publication details, and prominent entities.
+- **Multilingual Semantic Q&A (RAG):** Ask questions in Kurdish (Sorani/Kurmanji) or English and get grounded answers with source citations.
+- **Interactive Conversational UI:** Full dual-pane view with live OCR markdown and conversational document chat.
 
 ---
 
