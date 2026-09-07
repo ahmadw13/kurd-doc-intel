@@ -24,7 +24,8 @@ import {
   ExternalLink,
   Download,
   ChevronDown,
-  XCircle
+  XCircle,
+  Trash2
 } from "lucide-react";
 
 interface DocumentMetadata {
@@ -70,6 +71,16 @@ interface QueryLog {
 interface PageSegment {
   pageNumber: number;
   content: string;
+}
+
+interface DocumentSummary {
+  document_id: string;
+  filename: string;
+  title: string;
+  page_count: number;
+  dialect: string;
+  document_type: string;
+  created_at?: number | string;
 }
 
 interface AppError {
@@ -197,6 +208,15 @@ const translations = {
     errorGeneralBadge: "هەڵە",
     errorGeneralTitle: "کێشەیەک ڕوویدا",
     errorDismiss: "داخستن",
+    archiveBtn: "ئەرشیفی بەڵگەنامەکان",
+    archiveTitle: "بەڵگەنامە پشکنراوەکان",
+    newDocBtn: "بەڵگەنامەی نوێ",
+    noDocsInArchive: "هیچ بەڵگەنامەیەک لە ئەرشیفدا نییە.",
+    activeBadge: "چالاک",
+    loadingArchive: "بارکردنی ئەرشیف...",
+    clearArchiveBtn: "سڕینەوەی ئەرشیف",
+    clearArchiveConfirm: "دڵنیایت لە سڕینەوەی هەموو بەڵگەنامەکانی ناو ئەرشیف؟ ئەم کردارە ناگەڕێتەوە.",
+    deleteDocBtn: "سڕینەوە",
   },
   en: {
     dir: "ltr",
@@ -257,6 +277,15 @@ const translations = {
     errorGeneralBadge: "Error",
     errorGeneralTitle: "An Error Occurred",
     errorDismiss: "Dismiss",
+    archiveBtn: "Document Archive",
+    archiveTitle: "Analyzed Documents",
+    newDocBtn: "New Document",
+    noDocsInArchive: "No documents in archive yet.",
+    activeBadge: "Active",
+    loadingArchive: "Loading archive...",
+    clearArchiveBtn: "Clear Archive",
+    clearArchiveConfirm: "Are you sure you want to clear the entire archive? This cannot be undone.",
+    deleteDocBtn: "Delete",
   }
 };
 
@@ -353,10 +382,115 @@ export default function Home() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const timerRefs = useRef<NodeJS.Timeout[]>([]);
 
+  // Document Archive switcher state
+  const [documentsList, setDocumentsList] = useState<DocumentSummary[]>([]);
+  const [isLoadingArchive, setIsLoadingArchive] = useState<boolean>(false);
+  const [showDocsMenu, setShowDocsMenu] = useState<boolean>(false);
+  const docsMenuRef = useRef<HTMLDivElement>(null);
+
+  const fetchDocumentsList = async () => {
+    try {
+      setIsLoadingArchive(true);
+      const res = await fetch(getApiUrl("/api/v1/documents"));
+      if (res.ok) {
+        const data = await res.json();
+        const docs = Array.isArray(data) ? data : (Array.isArray(data?.documents) ? data.documents : []);
+        setDocumentsList(docs);
+      }
+    } catch (err) {
+      console.error("Failed to fetch documents list", err);
+    } finally {
+      setIsLoadingArchive(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchDocumentsList();
+  }, []);
+
+  const handleSelectDocument = async (docId: string) => {
+    if (parseResult?.document_id === docId) {
+      setShowDocsMenu(false);
+      return;
+    }
+    setShowDocsMenu(false);
+    setIsProcessing(true);
+    setErrorInfo(null);
+    try {
+      const res = await fetch(getApiUrl(`/api/v1/documents/${docId}`));
+      if (!res.ok) {
+        throw new Error(`Failed to load document (${res.status})`);
+      }
+      const data: ParseResponse = await res.json();
+      setParseResult(data);
+      setFile(null);
+      setQueryHistory([]);
+      setCurrentStep(5);
+    } catch (err: any) {
+      setErrorInfo(parseAppError(0, null, err.message || "Failed to switch document"));
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleNewDocument = () => {
+    setParseResult(null);
+    setFile(null);
+    setQueryHistory([]);
+    setCurrentStep(0);
+    setErrorInfo(null);
+    setShowDocsMenu(false);
+  };
+
+  const handleClearArchive = async () => {
+    if (!window.confirm(t.clearArchiveConfirm)) return;
+    setIsLoadingArchive(true);
+    try {
+      const res = await fetch(getApiUrl("/api/v1/documents"), {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setDocumentsList([]);
+        setParseResult(null);
+        setFile(null);
+        setQueryHistory([]);
+        setCurrentStep(0);
+        setShowDocsMenu(false);
+      }
+    } catch (err) {
+      console.error("Failed to clear archive", err);
+    } finally {
+      setIsLoadingArchive(false);
+    }
+  };
+
+  const handleDeleteDocument = async (e: React.MouseEvent, docId: string) => {
+    e.stopPropagation();
+    try {
+      const res = await fetch(getApiUrl(`/api/v1/documents/${docId}`), {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setDocumentsList((prev) => prev.filter((d) => d.document_id !== docId));
+        if (parseResult?.document_id === docId) {
+          setParseResult(null);
+          setFile(null);
+          setQueryHistory([]);
+          setCurrentStep(0);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to delete document", err);
+    }
+  };
+
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
         setShowExportMenu(false);
+      }
+      if (docsMenuRef.current && !docsMenuRef.current.contains(event.target as Node)) {
+        setShowDocsMenu(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -437,6 +571,7 @@ export default function Home() {
       const data: ParseResponse = await res.json();
       setParseResult(data);
       setCurrentStep(5);
+      fetchDocumentsList();
     } catch (err: any) {
       timerRefs.current.forEach((t) => clearTimeout(t));
       timerRefs.current = [];
@@ -722,6 +857,114 @@ function findBestMatchingSubstr(content: string, snippet: string): string | null
         </div>
 
         <div className="flex items-center gap-3 text-xs">
+          {/* Document Archive Switcher */}
+          <div className="relative" ref={docsMenuRef}>
+            <button
+              type="button"
+              onClick={() => {
+                setShowDocsMenu((prev) => !prev);
+                if (!showDocsMenu) fetchDocumentsList();
+              }}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-md border border-zinc-700 bg-zinc-800/90 text-zinc-200 hover:bg-zinc-700 hover:text-white transition-colors cursor-pointer text-xs"
+            >
+              <BookOpen className="h-3.5 w-3.5 text-teal-400" />
+              <span className="font-medium">{t.archiveBtn}</span>
+              {documentsList.length > 0 && (
+                <span className="px-1.5 py-0.2 bg-teal-500/20 text-teal-300 rounded text-[10px] font-mono">
+                  {documentsList.length}
+                </span>
+              )}
+              <ChevronDown className="h-3 w-3 text-zinc-400" />
+            </button>
+
+            {showDocsMenu && (
+              <div className="absolute right-0 rtl:right-auto rtl:left-0 mt-1.5 w-72 sm:w-80 rounded-lg border border-zinc-800 bg-zinc-900 shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-100">
+                <div className="flex items-center justify-between px-2 py-1.5 border-b border-zinc-800/80 mb-1.5 gap-2">
+                  <span className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">{t.archiveTitle}</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleNewDocument}
+                      className="flex items-center gap-1 text-[11px] text-teal-400 hover:text-teal-300 transition-colors font-medium cursor-pointer"
+                    >
+                      <span>+ {t.newDocBtn}</span>
+                    </button>
+                    {documentsList.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleClearArchive}
+                        title={t.clearArchiveBtn}
+                        className="flex items-center gap-1 text-[11px] text-rose-400/90 hover:text-rose-300 transition-colors cursor-pointer border-l border-zinc-800 pl-2 rtl:border-l-0 rtl:border-r rtl:pl-0 rtl:pr-2"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        <span>{t.clearArchiveBtn}</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {isLoadingArchive ? (
+                  <div className="flex items-center justify-center py-6 text-zinc-400 gap-2 text-xs">
+                    <Loader2 className="h-4 w-4 animate-spin text-teal-400" />
+                    <span>{t.loadingArchive}</span>
+                  </div>
+                ) : documentsList.length === 0 ? (
+                  <div className="py-6 text-center text-zinc-500 text-xs">
+                    {t.noDocsInArchive}
+                  </div>
+                ) : (
+                  <div className="max-h-64 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                    {documentsList.map((doc) => {
+                      const isActive = parseResult?.document_id === doc.document_id;
+                      return (
+                        <div
+                          key={doc.document_id}
+                          onClick={() => handleSelectDocument(doc.document_id)}
+                          className={`group w-full text-left rtl:text-right px-2.5 py-2 rounded-md transition-colors flex items-center justify-between gap-2 text-xs cursor-pointer ${
+                            isActive
+                              ? "bg-teal-950/60 border border-teal-500/40 text-teal-100"
+                              : "hover:bg-zinc-800 text-zinc-300"
+                          }`}
+                        >
+                          <div className="flex items-start gap-2 min-w-0 flex-1">
+                            <FileText className={`h-4 w-4 shrink-0 mt-0.5 ${isActive ? "text-teal-400" : "text-zinc-500"}`} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-1.5">
+                                <span className="font-medium truncate text-zinc-100">{doc.title || doc.filename}</span>
+                                {isActive && (
+                                  <span className="shrink-0 text-[10px] bg-teal-500/30 text-teal-300 px-1.5 py-0.2 rounded font-semibold">
+                                    {t.activeBadge}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 text-[10px] text-zinc-400 mt-0.5">
+                                <span>{doc.page_count} {t.pages}</span>
+                                {doc.dialect && (
+                                  <>
+                                    <span>•</span>
+                                    <span>{doc.dialect}</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteDocument(e, doc.document_id)}
+                            title={t.deleteDocBtn}
+                            className="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-rose-400 rounded transition-opacity cursor-pointer shrink-0"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-md bg-zinc-900/90 border border-zinc-800 text-zinc-400">
             <span className={`h-2 w-2 rounded-full ${isProcessing ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`}></span>
             <span className={isProcessing ? "text-amber-300" : "text-zinc-300"}>
