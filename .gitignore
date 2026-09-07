@@ -51,7 +51,10 @@ uploads/
 !**/uploads/.gitkeep
 *.sqlite3
 
-# IDEs & System
+# IDEs, System & Local Agent Configurations
+.agents/
+.agent/
+.gemini/
 .vscode/
 .idea/
 *.swp
