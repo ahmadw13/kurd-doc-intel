@@ -4,17 +4,17 @@
 
 ---
 
-## 🏛️ Context & Problem Statement
+## Context & Problem Statement
 Historical and modern Kurdish texts present unique challenges for traditional OCR and document parsing pipelines:
 - Complex ligatures, non-standard diacritics, and distinctive Kurdish characters (ڵ, ڕ, ڤ, ۆ, ێ, ژ, پ, چ, گ).
 - Century-old degraded scans from historical Kurdish newspapers, poetry collections, and manuscripts.
 - A lack of localized semantic search and RAG systems tailored to Kurdish heritage and administrative documents.
 
-**KurdDocIntel** solves this by pairing Vision-Language Models (VLMs) with specialized document prompting and a multilingual vector retrieval engine.
+**KurdDocIntel** addresses this by pairing Vision-Language Models (VLMs) with specialized document prompting and a multilingual vector retrieval engine.
 
 ---
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 `
 [ PDF / Image / Manuscript ]
@@ -40,7 +40,7 @@ Historical and modern Kurdish texts present unique challenges for traditional OC
 
 ---
 
-## 🚀 Key Capabilities
+## Key Capabilities
 - **High-Fidelity Kurdish Transcription:** Preserves Kurdish typography, poetry meter, and table structures.
 - **Metadata & Entity Extraction:** Automatically detects document date, place of publication, author/signatory, and key themes.
 - **Archival Semantic Q&A:** Ask natural questions in Kurdish (Sorani/Kurmanji) or English and get grounded answers with document citations.
@@ -48,7 +48,7 @@ Historical and modern Kurdish texts present unique challenges for traditional OC
 
 ---
 
-## 💻 Tech Stack
+## Tech Stack
 - **Backend:** FastAPI (Python 3.13), Pydantic
 - **AI / Multimodal:** Vision-Language Models (Gemini / OpenAI VLM), Text Embeddings
 - **Retrieval:** ChromaDB vector store
