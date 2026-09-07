@@ -212,4 +212,27 @@ class VectorService:
 
         return citations[:top_k]
 
+    def clear_all(self):
+        try:
+            # Ensure client is initialized
+            _ = self.collection
+            if self._client is not None:
+                try:
+                    self._client.delete_collection("kurdish_multilingual_v1")
+                except Exception:
+                    pass
+                self._collection = None
+            elif self._collection is not None:
+                all_ids = self._collection.get().get("ids", [])
+                if all_ids:
+                    self._collection.delete(ids=all_ids)
+        except Exception as e:
+            print(f"Error resetting vector collection: {e}")
+
+    def delete_document(self, document_id: str):
+        try:
+            self.collection.delete(where={"document_id": document_id})
+        except Exception as e:
+            print(f"Error deleting document {document_id} from vector collection: {e}")
+
 vector_service = VectorService()
