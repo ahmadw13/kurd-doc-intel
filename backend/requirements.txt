@@ -10,6 +10,7 @@ openai>=3.8.0
 
 # Document & Image Processing
 pypdf>=6.17.0
+pypdfium2>=5.13.0
 pillow>=12.3.0
 numpy>=2.5.3
 
