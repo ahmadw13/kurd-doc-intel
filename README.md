@@ -10,32 +10,43 @@ Historical and modern Kurdish texts present unique challenges for traditional OC
 - Century-old degraded scans from historical Kurdish newspapers, poetry collections, and manuscripts.
 - A lack of localized semantic search and RAG systems tailored to Kurdish heritage and administrative documents.
 
-**KurdDocIntel** addresses this by pairing Vision-Language Models (VLMs) with specialized document prompting and a multilingual vector retrieval engine.
+KurdDocIntel addresses this by pairing Vision-Language Models (VLMs) with specialized document prompting and a multilingual vector retrieval engine.
 
 ---
 
-## Architecture Overview
+## Architecture
 
-`
-[ PDF / Image / Manuscript ]
-            │
-            ▼
-┌───────────────────────┐
-│ Ingestion & Tiling    │
-└───────────┬───────────┘
-            ▼
-┌───────────────────────┐
-│ Multimodal VLM Parser │ ──► [ Structured Markdown & Entity Metadata ]
-└───────────┬───────────┘
-            ▼
-┌───────────────────────┐
-│ Multilingual RAG &    │ ──► [ Semantic Search & Context-Aware Q&A ]
-│ Chroma Vector Index   │
-└───────────┬───────────┘
-            ▼
-┌───────────────────────┐
-│ Next.js + Tailwind UI │ (Bilingual Kurdish / English with RTL Support)
-└───────────────────────┘
+`mermaid
+flowchart TD
+    subgraph Input [Document Ingestion]
+        Doc["Document (PDF / Image / Manuscript)"]
+        Pre["Preprocessing & Normalization"]
+        Doc --> Pre
+    end
+
+    subgraph Extraction [Multimodal Intelligence]
+        VLM["Vision-Language Parser (VLM)"]
+        Markdown["Structured Kurdish Markdown"]
+        Metadata["Entity & Metadata Extraction"]
+        Pre --> VLM
+        VLM --> Markdown
+        VLM --> Metadata
+    end
+
+    subgraph Indexing [Retrieval Engine]
+        Embed["Multilingual Embeddings"]
+        VectorDB[("ChromaDB Vector Store")]
+        Markdown --> Embed
+        Embed --> VectorDB
+    end
+
+    subgraph Application [User Interface]
+        UI["Next.js Web Interface"]
+        QA["Contextual Q&A & Search API"]
+        VectorDB --> QA
+        Metadata --> QA
+        QA --> UI
+    end
 `
 
 ---
