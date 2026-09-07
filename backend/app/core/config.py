@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     
     HOST: str = "0.0.0.0"
     PORT: int = 8000
-    CORS_ORIGINS: Union[List[str], str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    CORS_ORIGINS: Union[List[str], str] = ["*"]
     
     AI_PROVIDER: str = "gemini"
     GEMINI_API_KEY: str = ""
