@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
 import { 
@@ -15,7 +15,7 @@ import {
   Globe, 
   MapPin, 
   Tag, 
-  ExternalLink 
+  Languages 
 } from "lucide-react";
 
 interface DocumentMetadata {
@@ -49,17 +49,123 @@ interface QueryResponse {
   citations: SourceCitation[];
 }
 
+interface ChatMessage {
+  id: string;
+  sender: "user" | "assistant";
+  text: string;
+  citations?: SourceCitation[];
+}
+
+const translations = {
+  ckb: {
+    dir: "rtl",
+    title: "KurdDocIntel",
+    subtitle: "سیستەمی ژیریی دەستکرد بۆ خوێندنەوە و گەڕان لە بەڵگەنامە و کتێبە کوردییەکان",
+    badge: "پڕۆژەی کراوە",
+    techBadge: "Gemini Flash VLM + ChromaDB",
+    heroTitle: "شیکردنەوە و خوێندنەوەی بەڵگەنامە و پەڕتووکە کوردییەکان",
+    heroDesc: "سیستەمێکی پێشکەوتووی OCR و پڕۆسێسکردنی بەڵگەنامە بە هاوکاریی مۆدێلەکانی بینین و زمان (VLM) بۆ گۆڕینی پەڕەکان بۆ دەقی دیجیتاڵی، دەرهێنانی زانیاری و گەڕانی ماناوی (RAG).",
+    heroTags: ["سۆرانی & کرمانجی", "دەرهێنانی زانیاری & ناسنامەکان", "Semantic Search (RAG)"],
+    uploadTitle: "بارکردنی بەڵگەنامە (PDF یان وێنە)",
+    chooseFile: "پەڕگەی PDF یان وێنە دیاری بکە",
+    supportedFormats: "پشتگیری لە فۆرماتی PDF, JPG, PNG دەکات",
+    maxPagesLabel: "ژمارەی پەڕە بۆ شیکردنەوە:",
+    pagesUnit: "پەڕە",
+    maxPagesHint: "دەتوانیت لە ١ تا ١٠ پەڕە هەڵبژێریت بۆ تێستی خێرا و پاراستنی پشکی کوۆتا.",
+    startBtn: "دەستپێکردنی شیکردنەوەی بەڵگەنامە",
+    processingBtn: "شیکردنەوەی پەڕەکان لە ڕێگەی ژیریی دەستکردەوە...",
+    metadataTitle: "زانیارییە دەرهێنراوەکان (Metadata)",
+    successStatus: "شیکردنەوە سەرکەوتوو بوو",
+    secondsUnit: "چرکە",
+    docTitle: "ناونیشانی بەڵگەنامە",
+    unknown: "نادیار",
+    dialect: "شێوەزار",
+    defaultDialect: "سۆرانی",
+    location: "شوێن / شار",
+    locationUnspecified: "دیاری نەکراوە",
+    summaryHeader: "پوختەی ناوەڕۆک (Summary):",
+    entitiesHeader: "ناوی کەسایەتی، ڕێکخراو و دەزگاکان:",
+    emptyUploadHint: "بەڵگەنامەیەک باربکە تا پوختە، شێوەزار و ناوەڕۆکەکەی لەم بەشەدا دەربکەوێت",
+    ocrTitle: "دەقی دەرهێنراوی کوردی (OCR Markdown)",
+    emptyOcr: "هیچ دەقێک تا ئێستا بار نەکراوە...",
+    ragTitle: "پرسیارکردن لە بەڵگەنامەکە (Semantic Q&A / RAG)",
+    aiAnswer: "وەڵامی ژیریی دەستکرد:",
+    citationsHeader: "بەشە سەرچاوە دۆزراوەکان (Citations):",
+    chunkPrefix: "پارچە ژمارە",
+    relevance: "ڕێژەی نزیکی:",
+    emptyRagHint: "پرسیارێک لەسەر بەڵگەنامەکە بنووسە بۆ دۆزینەوەی دەقی پەیوەندیدار",
+    questionPlaceholder: "پرسیارەکەت بنووسە... (بۆ نموونە: ئەم بابەتە باسی چی دەکات؟)",
+    searchBtn: "بگەڕێ",
+    footer: "KurdDocIntel — پڕۆژەی کراوە بۆ دیجیتاڵکردن و گەڕانی بەڵگەنامە و سەرچاوە کوردییەکان",
+    toggleBtn: "English",
+  },
+  en: {
+    dir: "ltr",
+    title: "KurdDocIntel",
+    subtitle: "Kurdish Multimodal Document Intelligence & Semantic Search",
+    badge: "Open Source",
+    techBadge: "Gemini Flash VLM + ChromaDB",
+    heroTitle: "Kurdish Document OCR & Semantic Intelligence",
+    heroDesc: "High-precision document parsing and OCR powered by Vision-Language Models (VLMs) and vector retrieval to digitize, structure, and query Kurdish documents, books, and publications.",
+    heroTags: ["Sorani & Kurmanji", "Metadata & Entity Extraction", "Semantic Search (RAG)"],
+    uploadTitle: "Upload Document (PDF or Image)",
+    chooseFile: "Choose PDF or image file",
+    supportedFormats: "Supports PDF, JPG, PNG, and WebP formats",
+    maxPagesLabel: "Pages to process:",
+    pagesUnit: "pages",
+    maxPagesHint: "Select 1 to 10 pages for rapid processing and quota conservation.",
+    startBtn: "Start Document Analysis",
+    processingBtn: "Analyzing pages with Multimodal VLM...",
+    metadataTitle: "Extracted Document Metadata",
+    successStatus: "Document parsed successfully",
+    secondsUnit: "sec",
+    docTitle: "Document Title",
+    unknown: "Unknown",
+    dialect: "Dialect",
+    defaultDialect: "Sorani",
+    location: "Location / City",
+    locationUnspecified: "Unspecified",
+    summaryHeader: "Content Summary:",
+    entitiesHeader: "Prominent Entities, People & Organizations:",
+    emptyUploadHint: "Upload a document to extract metadata, summary, dialect, and entities",
+    ocrTitle: "Extracted Transcription (OCR Markdown)",
+    emptyOcr: "No document parsed yet...",
+    ragTitle: "Ask the Document (Semantic Q&A / RAG)",
+    aiAnswer: "AI Answer:",
+    citationsHeader: "Source Grounding Citations:",
+    chunkPrefix: "Chunk #",
+    relevance: "Relevance:",
+    emptyRagHint: "Ask a question about the document to retrieve grounded passages",
+    questionPlaceholder: "Ask a question... (e.g. What is this document about?)",
+    searchBtn: "Search",
+    footer: "KurdDocIntel — Open-source platform for Kurdish document digitization, OCR, and semantic retrieval",
+    toggleBtn: "کوردی (سۆرانی)",
+  }
+};
+
 export default function Home() {
+  const [lang, setLang] = useState<"ckb" | "en">("ckb");
+  const t = translations[lang];
+
   const [file, setFile] = useState<File | null>(null);
   const [maxPages, setMaxPages] = useState<number>(3);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [parseResult, setParseResult] = useState<ParseResponse | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // RAG Query states
+  // RAG Query & Chat states
   const [question, setQuestion] = useState<string>("");
   const [isQuerying, setIsQuerying] = useState<boolean>(false);
-  const [queryResult, setQueryResult] = useState<QueryResponse | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+  React.useEffect(() => {
+    document.documentElement.dir = t.dir;
+    document.documentElement.lang = lang;
+  }, [lang, t.dir]);
+
+  const toggleLanguage = () => {
+    setLang((prev) => (prev === "ckb" ? "en" : "ckb"));
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -74,13 +180,14 @@ export default function Home() {
     setIsUploading(true);
     setErrorMsg(null);
     setParseResult(null);
-    setQueryResult(null);
+    setMessages([]);
 
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8080";
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/v1/parse?max_pages=${maxPages}`, {
+      const res = await fetch(`${backendUrl}/api/v1/parse?max_pages=${maxPages}`, {
         method: "POST",
         body: formData,
       });
@@ -93,7 +200,7 @@ export default function Home() {
       const data: ParseResponse = await res.json();
       setParseResult(data);
     } catch (err: any) {
-      setErrorMsg(err.message || "هەڵەیەک لە کاتی شیکردنەوەی بەڵگەنامەکەدا ڕوویدا");
+      setErrorMsg(err.message || (lang === "ckb" ? "هەڵەیەک لە کاتی شیکردنەوەی بەڵگەنامەکەدا ڕوویدا" : "Failed to process the document"));
     } finally {
       setIsUploading(false);
     }
@@ -101,17 +208,28 @@ export default function Home() {
 
   const handleQuery = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!question.trim()) return;
+    const currentQ = question.trim();
+    if (!currentQ) return;
 
+    const userMsg: ChatMessage = {
+      id: "usr_" + Date.now(),
+      sender: "user",
+      text: currentQ,
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setQuestion("");
     setIsQuerying(true);
     setErrorMsg(null);
 
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8080";
+
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/query", {
+      const res = await fetch(`${backendUrl}/api/v1/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          question: question,
+          question: currentQ,
           document_ids: parseResult ? [parseResult.document_id] : undefined,
           top_k: 3,
         }),
@@ -123,16 +241,22 @@ export default function Home() {
       }
 
       const data: QueryResponse = await res.json();
-      setQueryResult(data);
+      const botMsg: ChatMessage = {
+        id: "bot_" + Date.now(),
+        sender: "assistant",
+        text: data.answer,
+        citations: data.citations,
+      };
+      setMessages((prev) => [...prev, botMsg]);
     } catch (err: any) {
-      setErrorMsg(err.message || "هەڵەیەک لە لێکۆڵینەوە و گەڕانی بەڵگەنامەدا ڕوویدا");
+      setErrorMsg(err.message || (lang === "ckb" ? "هەڵەیەک لە لێکۆڵینەوە و گەڕانی بەڵگەنامەدا ڕوویدا" : "Failed to query the document"));
     } finally {
       setIsQuerying(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-950 font-kurdish text-slate-100">
+    <div dir={t.dir} className={`flex min-h-screen flex-col bg-slate-950 text-slate-100 ${lang === "ckb" ? "font-kurdish" : ""}`}>
       {/* Top Navigation */}
       <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
@@ -142,20 +266,31 @@ export default function Home() {
             </div>
             <div>
               <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-                KurdDocIntel
+                {t.title}
                 <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-400 border border-emerald-500/20">
-                  AI Olympiad 2026
+                  {t.badge}
                 </span>
               </h1>
-              <p className="text-xs text-slate-400">سیستەمی ژیریی دەستکرد بۆ ساغکردنەوە و گەڕانی بەڵگەنامە کوردییەکان</p>
+              <p className="text-xs text-slate-400">{t.subtitle}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-xs text-slate-400">
-            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-2.5 py-1 border border-slate-800">
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-2.5 py-1 text-xs text-slate-400 border border-slate-800">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              Gemini Flash VLM + ChromaDB
+              {t.techBadge}
             </span>
+
+            {/* Language Switcher Button */}
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800 hover:text-white transition-all shadow-sm active:scale-95"
+              title="Toggle English / Kurdish"
+            >
+              <Languages className="h-3.5 w-3.5 text-emerald-400" />
+              <span>{t.toggleBtn}</span>
+            </button>
           </div>
         </div>
       </header>
@@ -167,16 +302,16 @@ export default function Home() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-                بەدیجیتاڵکردنی دەستنووس و ڕۆژنامە مێژووییە کوردییەکان
+                {t.heroTitle}
               </h2>
               <p className="mt-2 text-sm text-slate-400 max-w-2xl leading-relaxed">
-                ئەم سیستەمە بە هاوکاریی مۆدێلە پێشکەوتووەکانی بینایی و زمان (VLM)، پەڕە و دەستنووسە کوردییەکان دەخوێنێتەوە، زانیارییەکان پوخت دەکاتەوە و توانای گەڕانی ماناویی پێشکەش دەکات.
+                {t.heroDesc}
               </p>
             </div>
             <div className="flex flex-wrap gap-2 text-xs">
-              <span className="rounded-lg bg-emerald-950/60 border border-emerald-800/40 px-3 py-1.5 text-emerald-300">سۆرانی & کرمانجی</span>
-              <span className="rounded-lg bg-teal-950/60 border border-teal-800/40 px-3 py-1.5 text-teal-300">دەرهێنانی مێژوو & شوێن</span>
-              <span className="rounded-lg bg-sky-950/60 border border-sky-800/40 px-3 py-1.5 text-sky-300">Semantic Search (RAG)</span>
+              <span className="rounded-lg bg-emerald-950/60 border border-emerald-800/40 px-3 py-1.5 text-emerald-300">{t.heroTags[0]}</span>
+              <span className="rounded-lg bg-teal-950/60 border border-teal-800/40 px-3 py-1.5 text-teal-300">{t.heroTags[1]}</span>
+              <span className="rounded-lg bg-sky-950/60 border border-sky-800/40 px-3 py-1.5 text-sky-300">{t.heroTags[2]}</span>
             </div>
           </div>
         </section>
@@ -186,7 +321,7 @@ export default function Home() {
           <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur">
             <h3 className="text-base font-semibold text-white flex items-center gap-2 mb-4">
               <UploadCloud className="h-5 w-5 text-emerald-400" />
-              بارکردنی بەڵگەنامە (PDF یان وێنە)
+              {t.uploadTitle}
             </h3>
 
             <div className="flex flex-col gap-4">
@@ -196,10 +331,10 @@ export default function Home() {
               >
                 <UploadCloud className="h-10 w-10 text-slate-500 mb-2" />
                 <span className="text-sm font-medium text-slate-200">
-                  {file ? file.name : "پەڕگەی PDF یان وێنە دیاری بکە"}
+                  {file ? file.name : t.chooseFile}
                 </span>
                 <span className="mt-1 text-xs text-slate-500">
-                  پشتگیری لە فۆرماتی PDF, JPG, PNG دەکات
+                  {t.supportedFormats}
                 </span>
                 <input 
                   id="file-upload" 
@@ -213,8 +348,8 @@ export default function Home() {
               {/* Max pages control */}
               <div className="rounded-xl border border-slate-800/80 bg-slate-950/40 p-4">
                 <div className="flex items-center justify-between text-xs font-medium text-slate-300 mb-2">
-                  <span>ژمارەی پەڕە بۆ شیکردنەوە:</span>
-                  <span className="font-bold text-emerald-400">{maxPages} پەڕە</span>
+                  <span>{t.maxPagesLabel}</span>
+                  <span className="font-bold text-emerald-400">{maxPages} {t.pagesUnit}</span>
                 </div>
                 <input 
                   type="range" 
@@ -225,7 +360,7 @@ export default function Home() {
                   className="w-full accent-emerald-500 cursor-pointer"
                 />
                 <p className="mt-2 text-[11px] text-slate-500">
-                  دەتوانیت لە ١ تا ١٠ پەڕە هەڵبژێریت بۆ تێستی خێرا و پاراستنی پشکی کوۆتا.
+                  {t.maxPagesHint}
                 </p>
               </div>
 
@@ -237,12 +372,12 @@ export default function Home() {
                 {isUploading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    شیکردنەوەی پەڕەکان لە ڕێگەی ژیریی دەستکردەوە...
+                    {t.processingBtn}
                   </>
                 ) : (
                   <>
                     <Sparkles className="h-4 w-4" />
-                    دەستپێکردنی ساغکردنەوەی بەڵگەنامە
+                    {t.startBtn}
                   </>
                 )}
               </button>
@@ -261,7 +396,7 @@ export default function Home() {
             <div>
               <h3 className="text-base font-semibold text-white flex items-center gap-2 mb-4">
                 <BookOpen className="h-5 w-5 text-teal-400" />
-                زانیارییە سەرەکییە دەرهێنراوەکان (Metadata)
+                {t.metadataTitle}
               </h3>
 
               {parseResult ? (
@@ -270,16 +405,16 @@ export default function Home() {
                   <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3 text-xs text-slate-400">
                     <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
                       <CheckCircle2 className="h-4 w-4" />
-                      شیکردنەوە سەرکەوتوو بوو
+                      {t.successStatus}
                     </span>
                     <div className="flex items-center gap-4">
                       <span className="flex items-center gap-1">
                         <Layers className="h-3.5 w-3.5" />
-                        {parseResult.page_count} پەڕە
+                        {parseResult.page_count} {t.pagesUnit}
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="h-3.5 w-3.5" />
-                        {parseResult.processing_time_seconds} چرکە
+                        {parseResult.processing_time_seconds} {t.secondsUnit}
                       </span>
                       <span className="font-mono text-[11px] text-slate-500">ID: {parseResult.document_id}</span>
                     </div>
@@ -288,27 +423,27 @@ export default function Home() {
                   {/* Metadata tags */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                     <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-                      <span className="text-[11px] text-slate-500 block mb-1">ناونیشانی بەڵگەنامە</span>
+                      <span className="text-[11px] text-slate-500 block mb-1">{t.docTitle}</span>
                       <span className="text-sm font-semibold text-white line-clamp-1">
-                        {parseResult.metadata.title || "نادیار"}
+                        {parseResult.metadata.title || t.unknown}
                       </span>
                     </div>
 
                     <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
                       <span className="text-[11px] text-slate-500 block mb-1 flex items-center gap-1">
-                        <Globe className="h-3 w-3" /> شێوەزار
+                        <Globe className="h-3 w-3" /> {t.dialect}
                       </span>
                       <span className="text-sm font-semibold text-teal-300">
-                        {parseResult.metadata.dialect || "سۆرانی"}
+                        {parseResult.metadata.dialect || t.defaultDialect}
                       </span>
                     </div>
 
                     <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
                       <span className="text-[11px] text-slate-500 block mb-1 flex items-center gap-1">
-                        <MapPin className="h-3 w-3" /> شوێن / شار
+                        <MapPin className="h-3 w-3" /> {t.location}
                       </span>
                       <span className="text-sm font-semibold text-sky-300">
-                        {parseResult.metadata.location || "دیاری نەکراوە"}
+                        {parseResult.metadata.location || t.locationUnspecified}
                       </span>
                     </div>
                   </div>
@@ -316,7 +451,7 @@ export default function Home() {
                   {/* Summary */}
                   {parseResult.metadata.summary && (
                     <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4 text-xs text-slate-300 leading-relaxed">
-                      <span className="text-slate-400 font-semibold block mb-1">پوختەی ناوەڕۆک (Summary):</span>
+                      <span className="text-slate-400 font-semibold block mb-1">{t.summaryHeader}</span>
                       {parseResult.metadata.summary}
                     </div>
                   )}
@@ -325,7 +460,7 @@ export default function Home() {
                   {parseResult.metadata.entities && parseResult.metadata.entities.length > 0 && (
                     <div>
                       <span className="text-xs text-slate-400 font-semibold block mb-2 flex items-center gap-1">
-                        <Tag className="h-3.5 w-3.5" /> ناوی کەسایەتی، ڕێکخراو و دەزگاکان:
+                        <Tag className="h-3.5 w-3.5" /> {t.entitiesHeader}
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {parseResult.metadata.entities.map((entity, idx) => (
@@ -343,7 +478,7 @@ export default function Home() {
               ) : (
                 <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-slate-800 text-center text-slate-500 text-xs">
                   <FileText className="h-8 w-8 mb-2 opacity-40" />
-                  بەڵگەنامەیەک باربکە تا پوختە، شێوەزار و ناوەڕۆکەکەی لەم بەشەدا دەربکەوێت
+                  {t.emptyUploadHint}
                 </div>
               )}
             </div>
@@ -356,14 +491,14 @@ export default function Home() {
           <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur flex flex-col h-[520px]">
             <h3 className="text-base font-semibold text-white flex items-center gap-2 mb-3">
               <FileText className="h-5 w-5 text-emerald-400" />
-              دەقی ساغکراوەی کوردی (OCR Markdown)
+              {t.ocrTitle}
             </h3>
 
             <div className="flex-1 overflow-y-auto rounded-xl border border-slate-800/80 bg-slate-950 p-4 text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">
               {parseResult ? (
                 parseResult.transcription_markdown
               ) : (
-                <span className="text-slate-600 italic">هیچ دەقێک تا ئێستا بار نەکراوە...</span>
+                <span className="text-slate-600 italic">{t.emptyOcr}</span>
               )}
             </div>
           </div>
@@ -372,39 +507,64 @@ export default function Home() {
           <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur flex flex-col h-[520px]">
             <h3 className="text-base font-semibold text-white flex items-center gap-2 mb-3">
               <Search className="h-5 w-5 text-sky-400" />
-              پرسیارکردن لە بەڵگەنامەکە (Semantic Q&A / RAG)
+              {t.ragTitle}
             </h3>
 
-            {/* Answer Display */}
+            {/* Conversation Messages Display */}
             <div className="flex-1 overflow-y-auto rounded-xl border border-slate-800/80 bg-slate-950 p-4 text-sm space-y-4">
-              {queryResult ? (
-                <div>
-                  <div className="text-slate-200 leading-relaxed mb-4 border-b border-slate-800 pb-3">
-                    <span className="text-xs text-emerald-400 font-semibold block mb-1">وەڵامی ژیریی دەستکرد:</span>
-                    {queryResult.answer}
-                  </div>
+              {messages.length > 0 ? (
+                <div className="space-y-4">
+                  {messages.map((msg) => (
+                    <div 
+                      key={msg.id} 
+                      className={`flex flex-col ${msg.sender === "user" ? "items-start" : "items-end"}`}
+                    >
+                      <div 
+                        className={`max-w-[85%] rounded-2xl p-3.5 leading-relaxed text-sm ${
+                          msg.sender === "user" 
+                            ? "bg-slate-800 text-slate-100 border border-slate-700/60 rounded-tr-none" 
+                            : "bg-gradient-to-br from-emerald-950/60 to-slate-900 text-slate-100 border border-emerald-800/40 rounded-tl-none shadow-md"
+                        }`}
+                      >
+                        <span className="text-[11px] font-bold block mb-1 opacity-60">
+                          {msg.sender === "user" ? (lang === "ckb" ? "پرسیاری تۆ:" : "You:") : t.aiAnswer}
+                        </span>
+                        <div className="whitespace-pre-wrap">{msg.text}</div>
 
-                  {queryResult.citations && queryResult.citations.length > 0 && (
-                    <div>
-                      <span className="text-xs text-slate-400 font-semibold block mb-2">بەشە سەرچاوە دۆزراوەکان (Citations):</span>
-                      <div className="space-y-2">
-                        {queryResult.citations.map((cite, i) => (
-                          <div key={i} className="rounded-lg border border-slate-800 bg-slate-900/80 p-2.5 text-xs text-slate-300">
-                            <div className="flex items-center justify-between text-slate-500 mb-1 text-[11px]">
-                              <span>پارچە ژمارە {cite.chunk_index + 1}</span>
-                              <span className="text-emerald-400 font-mono">ڕێژەی نزیکی: {(cite.relevance_score * 100).toFixed(1)}%</span>
-                            </div>
-                            <p className="line-clamp-2 text-slate-400 italic">"{cite.text_snippet}"</p>
+                        {/* Citations for assistant answers */}
+                        {msg.citations && msg.citations.length > 0 && (
+                          <div className="mt-3 pt-2.5 border-t border-emerald-900/40 space-y-1.5">
+                            <span className="text-[10px] font-semibold text-emerald-400/90 block">
+                              {t.citationsHeader}
+                            </span>
+                            {msg.citations.map((cite, i) => (
+                              <div key={i} className="rounded-lg bg-slate-950/80 p-2 text-[11px] text-slate-300 border border-slate-800/80">
+                                <div className="flex items-center justify-between text-slate-500 mb-0.5 text-[10px]">
+                                  <span>{t.chunkPrefix} {cite.chunk_index + 1}</span>
+                                  <span className="text-emerald-400 font-mono">
+                                    {(cite.relevance_score * 100).toFixed(1)}%
+                                  </span>
+                                </div>
+                                <p className="line-clamp-2 italic text-slate-400 font-mono text-[10px]">"{cite.text_snippet}"</p>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
                       </div>
+                    </div>
+                  ))}
+
+                  {isQuerying && (
+                    <div className="flex items-center gap-2 text-xs text-slate-400 italic p-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-emerald-400" />
+                      <span>{lang === "ckb" ? "ژیریی دەستکرد لە بەڵگەنامەکەدا دەگەڕێت و وەڵام دەنووسێت..." : "Searching document & writing response..."}</span>
                     </div>
                   )}
                 </div>
               ) : (
                 <div className="flex h-full flex-col items-center justify-center text-center text-slate-500 text-xs">
                   <Search className="h-8 w-8 mb-2 opacity-40" />
-                  پرسیارێک لەسەر بەڵگەنامەکە بنووسە بۆ دۆزینەوەی دەقی پەیوەندیدار
+                  {t.emptyRagHint}
                 </div>
               )}
             </div>
@@ -413,7 +573,7 @@ export default function Home() {
             <form onSubmit={handleQuery} className="mt-3 flex gap-2">
               <input
                 type="text"
-                placeholder="پرسیارەکەت بنووسە... (بۆ نموونە: ئەم بابەتە باسی چی دەکات؟)"
+                placeholder={t.questionPlaceholder}
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 disabled={isQuerying}
@@ -425,7 +585,7 @@ export default function Home() {
                 className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-500 disabled:opacity-50 transition-all flex items-center gap-2"
               >
                 {isQuerying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                بگەڕێ
+                {t.searchBtn}
               </button>
             </form>
           </div>
@@ -434,7 +594,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-slate-800/80 bg-slate-950 py-4 text-center text-xs text-slate-500">
-        KurdDocIntel — بۆ پێشبڕکێی AI Olympiad 2026 | خزمەتگوزاری دیجیتاڵکردن و گەڕانی سەرچاوە و بەڵگەنامە مێژووییە کوردییەکان
+        {t.footer}
       </footer>
     </div>
   );

@@ -3,14 +3,14 @@ import pypdfium2 as pdfium
 from PIL import Image
 from typing import List, Tuple
 
-def extract_pdf_page_images(pdf_path: str, scale: float = 2.0) -> List[Tuple[bytes, str]]:
-    """Renders each page of a PDF into high-res JPEG image bytes suitable for VLM parsing."""
+def extract_pdf_page_images(pdf_path: str, scale: float = 3.0) -> List[Tuple[bytes, str]]:
+    """Renders each page of a PDF into ultra high-res JPEG image bytes (3x scale, ~216 DPI) for precise diacritic/dot recognition."""
     pdf = pdfium.PdfDocument(pdf_path)
     page_images = []
     
     for page_index in range(len(pdf)):
         page = pdf[page_index]
-        # Render page at 2x resolution for crisp text recognition
+        # Render page at 3x resolution for razor-sharp Kurdish diacritics and dots
         pil_image = page.render(scale=scale).to_pil()
         
         if pil_image.mode not in ("RGB", "L"):

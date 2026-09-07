@@ -1,9 +1,9 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "KurdDocIntel — ژیریی دەستکرد بۆ بەڵگەنامە و دەستنووسە کوردییەکان",
-  description: "High-precision Kurdish OCR, document parsing, paleography analysis, and semantic archival retrieval for historical and modern documents.",
+  title: "KurdDocIntel — ژیریی دەستکرد بۆ شیکردنەوە و گەڕانی بەڵگەنامە کوردییەکان",
+  description: "High-precision Kurdish OCR, document parsing, entity extraction, and multilingual semantic retrieval for Kurdish documents and books.",
 };
 
 export default function RootLayout({
@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ckb" dir="rtl" className="dark">
+    <html className="dark" suppressHydrationWarning>
       <body className="min-h-screen bg-slate-950 text-slate-100 antialiased selection:bg-emerald-500/20 selection:text-emerald-300">
         {children}
       </body>

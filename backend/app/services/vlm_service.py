@@ -1,23 +1,30 @@
-﻿import json
+import json
 import time
 import base64
 from typing import Tuple, Dict, Any, List
 from app.core.config import settings
 from app.core.schemas import DocumentMetadata
 
-KURDISH_PARSER_SYSTEM_PROMPT = """You are an expert Kurdish paleographer, historian, and document digitization AI specializing in Sorani and Kurmanji scripts, historical Kurdish periodicals, manuscripts, and administrative texts.
+KURDISH_PARSER_SYSTEM_PROMPT = """You are an expert Kurdish linguist and document digitization AI specializing in Kurdish scripts (Sorani, Kurmanji), printed books, academic papers, administrative documents, reports, and publications.
+
+CRITICAL ORTHOGRAPHY & ACCURACY RULES:
+1. Dot and diacritic precision: Pay extreme care to distinguishing letters with similar bodies:
+   - Single dot vs two dots (e.g. ن vs ت, ب vs پ, ژ vs ز, چ vs ج).
+   - Kurdish distinct letters (ڵ, ڕ, ڤ, ۆ, ێ, پ, چ, گ, ژ).
+   - Ensure grammatical coherence in Sorani Kurdish verbal stems, affixes, and vocabulary (e.g., دانان, نیشاندان, مانەوە, کاردانەوە).
+2. Transcribe the full text into clean, standard Kurdish Unicode markdown. Preserve original paragraph flow, headers, lists, and tables if present.
 
 Analyze the provided document page image and output a strictly valid JSON object with the following structure:
 {
-  "transcription_markdown": "Full text transcribed in standard Kurdish markdown. Preserve original dialect spelling, Kurdish characters (ڵ, ڕ, ڤ, ۆ, ێ, ژ, پ, چ, گ), poetry lines, and markdown tables if present.",
+  "transcription_markdown": "Full text transcribed in standard Kurdish markdown following the orthography rules above.",
   "metadata": {
-    "title": "Title or main heading of the document, or null",
-    "document_type": "One of: historical_manuscript, newspaper_periodical, administrative_record, poetry_literary, general",
-    "date_mentioned": "Date extracted from text (Gregorian, Kurdish, or Hijri), or null",
+    "title": "Title or main heading of the document or book chapter, or null",
+    "document_type": "One of: book, article, report, legal_administrative, official, academic, general",
+    "date_mentioned": "Date or year extracted from text (Gregorian, Kurdish, or Hijri), or null",
     "dialect": "Sorani, Kurmanji, Badini, or Hawrami",
-    "location": "City or region mentioned (e.g., Erbil, Sulaymaniyah, Duhok, Kirkuk, Mahabad), or null",
-    "entities": ["List of prominent names, organizations, places found in the document"],
-    "summary": "Concise 2-sentence summary of the content in English"
+    "location": "City, country, or location mentioned, or null",
+    "entities": ["List of prominent names, organizations, concepts, and places found in the document"],
+    "summary": "Concise 2-sentence summary of the content"
   }
 }
 
@@ -71,7 +78,6 @@ class VLMService:
                 err_str = str(e)
                 print(f"Gemini {model} failed ({err_str[:80]})...")
 
-        # If all Gemini models hit quota (429/503) and OpenAI key is available, switch to OpenAI!
         if settings.OPENAI_API_KEY:
             print("Gemini rate limits exhausted. Seamlessly switching to OpenAI (gpt-4o-mini)...")
             return self._call_openai(image_bytes, mime_type)
@@ -116,6 +122,46 @@ class VLMService:
         except Exception as e:
             print(f"All providers failed: {e}")
             return self._mock_kurdish_parse()
+
+    def answer_query(self, question: str, context: str) -> str:
+        """Answers user question using retrieved document context via Gemini/OpenAI."""
+        prompt = f"""You are an intelligent Kurdish document AI assistant.
+Based strictly on the following Kurdish document context, answer the user's question accurately and clearly.
+If the question is in English, reply in English. If the question is in Kurdish, reply in Kurdish.
+If the information is not present in the context, clearly state that the document does not specify this information.
+
+Document Context:
+\"\"\"
+{context}
+\"\"\"
+
+Question: {question}
+
+Answer:"""
+
+        if self.provider == "gemini" and settings.GEMINI_API_KEY:
+            from google import genai
+            client = genai.Client(api_key=settings.GEMINI_API_KEY)
+            for model in GEMINI_MODEL_CHAIN:
+                try:
+                    chat = client.chats.create(model=model)
+                    res = chat.send_message(prompt)
+                    if res and res.text:
+                        return res.text.strip()
+                except Exception as e:
+                    print(f"Failed query with {model}: {e}")
+                    continue
+
+        if settings.OPENAI_API_KEY:
+            from openai import OpenAI
+            client = OpenAI(api_key=settings.OPENAI_API_KEY)
+            res = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return res.choices[0].message.content.strip()
+
+        return "ببورە، نەتوانرا پەیوەندی بە مۆدێلی ژیریی دەستکردەوە بکرێت بۆ وەڵامدانەوە."
 
     def _mock_kurdish_parse(self) -> Tuple[str, DocumentMetadata]:
         sample_markdown = """# ڕۆژنامەی کوردستان — ژمارە ١ (١٨٩٨)
