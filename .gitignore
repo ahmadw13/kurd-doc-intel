@@ -44,10 +44,20 @@ frontend/build/
 
 # Vector store & local storage
 backend/chroma_db/
-backend/uploads/
+backend/data/uploads/*
+!backend/data/uploads/.gitkeep
+backend/data/documents/*
+!backend/data/documents/.gitkeep
+backend/data/samples/
+uploads/
+**/uploads/*
+!**/uploads/.gitkeep
 *.sqlite3
 
-# IDEs & System
+# IDEs, System & Local Agent Configurations
+.agents/
+.agent/
+.gemini/
 .vscode/
 .idea/
 *.swp

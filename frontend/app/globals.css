@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+body {
+  background-color: #020617;
+  color: #f8fafc;
+}
+
+.font-kurdish {
+  direction: rtl;
+  text-align: right;
+  line-height: 1.8;
+}
+
+@keyframes progress-slide {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-progress-bar {
+  animation: progress-slide 2s ease-in-out infinite;
+}

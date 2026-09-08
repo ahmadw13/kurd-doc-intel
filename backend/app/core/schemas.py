@@ -27,6 +27,7 @@ class QueryRequest(BaseModel):
 class SourceCitation(BaseModel):
     document_id: str
     chunk_index: int
+    page_number: Optional[int] = Field(1, description="1-indexed page number where this chunk is located")
     text_snippet: str
     relevance_score: float
 
