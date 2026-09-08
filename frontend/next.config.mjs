@@ -1,5 +1,6 @@
-﻿/** @type {import("next").NextConfig} */
+/** @type {import("next").NextConfig} */
 const nextConfig = {
+  output: "standalone",
   async rewrites() {
     const backendTarget = process.env.BACKEND_INTERNAL_URL || "http://127.0.0.1:8080";
     return [

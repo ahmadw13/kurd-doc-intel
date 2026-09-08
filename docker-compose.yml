@@ -1,0 +1,60 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: kurd-doc-intel-backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - path: .env
+        required: false
+      - path: ./backend/.env
+        required: false
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8080
+      - CHROMA_PERSIST_DIR=/app/chroma_db
+      - DOCUMENTS_DIR=/app/data/documents
+      - UPLOAD_DIR=/app/data/uploads
+    volumes:
+      - backend_documents:/app/data/documents
+      - backend_uploads:/app/data/uploads
+      - chroma_data:/app/chroma_db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - kurd_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: kurd-doc-intel-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - BACKEND_INTERNAL_URL=http://backend:8080
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - kurd_net
+
+volumes:
+  backend_documents:
+  backend_uploads:
+  chroma_data:
+
+networks:
+  kurd_net:
+    driver: bridge

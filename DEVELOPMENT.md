@@ -10,10 +10,6 @@ Before running the application locally, ensure you have the following installed:
 
 - **Python:** 3.11 or higher (3.13 tested and supported).
 - **Node.js:** 18.0 or higher (with npm or pnpm).
-- **Poppler:** Required by `pdf2image` for rendering PDF pages to high-resolution images.
-  - **Windows:** Download Poppler for Windows (e.g., from conda-forge or GitHub releases) and ensure `bin/` is added to your system `PATH`.
-  - **macOS:** `brew install poppler`
-  - **Ubuntu / Debian:** `sudo apt-get install -y poppler-utils`
 - **AI API Keys:**
   - Google Gemini API key (primary multimodal provider and embeddings).
   - OpenAI API key (optional fallback for OCR and Q&A).
@@ -59,7 +55,19 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:8080
 
 ## 3. Local Development Setup
 
-### Backend (FastAPI)
+### 3.1 Single-Command Development Runner
+
+To launch both the FastAPI backend (port 8080) and the Next.js frontend (port 3000) simultaneously in a single terminal with interleaved log streaming:
+
+```bash
+python run_dev.py
+```
+
+Pressing `Ctrl+C` cleanly shuts down both services and releases their ports.
+
+### 3.2 Individual Service Setup
+
+#### Backend (FastAPI)
 
 ```bash
 cd backend
@@ -82,7 +90,7 @@ uvicorn app.main:app --host 127.0.0.1 --port 8080 --reload
 
 The interactive OpenAPI documentation is available at `http://127.0.0.1:8080/docs`.
 
-### Frontend (Next.js)
+#### Frontend (Next.js)
 
 ```bash
 cd frontend
@@ -216,6 +224,13 @@ Open `http://localhost:3000` in your browser.
 ### 5.4 AI Quota & Error Resilience
 - When writing backend endpoints that call external AI providers, wrap calls with `try...except` catching rate limit errors (HTTP 429, `RESOURCE_EXHAUSTED`).
 - Return structured error details (`{ "code": "AI_RATE_LIMIT", "message": "..." }`) so the frontend can display contextual diagnostic notices.
+
+### 5.5 Pull Request Standards
+- Every pull request must adhere to the standard template defined in [.github/pull_request_template.md](.github/pull_request_template.md).
+- Ensure all backend unit tests pass (`python -m unittest discover -s tests`).
+- Ensure the frontend builds cleanly without TypeScript or lint errors (`npm run build`).
+- For user-facing interface changes, include screenshots verifying both RTL (Kurdish) and LTR (English) layouts.
+- Assign relevant domain labels (e.g., `frontend`, `backend`, `infra`, `documentation`).
 
 ---
 
